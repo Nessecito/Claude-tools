@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hourly Earnings Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #161b26;
+    --surface2: #1c2333;
+    --surface3: #212840;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text2: #8892a4;
+    --text3: #4e5a6e;
+    --accent: #4f8ef7;
+    --accent2: #3dd68c;
+    --gold: #f5c842;
+    --gold-dim: rgba(245,200,66,0.12);
+    --red: #f56c6c;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 58px; position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #4f8ef7 0%, #3dd68c 100%); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .header-note { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+  .tab-bar { display: flex; gap: 2px; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; }
+  .tab-btn { background: none; border: none; cursor: pointer; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--text2); padding: 14px 18px; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .main { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 104px); }
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1.25rem; overflow-y: auto; max-height: calc(100vh - 104px); position: sticky; top: 104px; }
+  .content { padding: 1.5rem 2rem; overflow: hidden; }
+  .s-group { margin-bottom: 1.75rem; }
+  .s-group-title { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .field input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 8px 10px; outline: none; transition: border-color 0.15s; }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--text3); }
+  .target-preview { font-size: 11px; color: var(--gold); font-family: var(--mono); margin-top: 5px; min-height: 16px; }
+  .filing-toggle { display: flex; gap: 4px; }
+  .filing-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 7px 0; font-family: var(--sans); font-size: 12px; color: var(--text2); cursor: pointer; transition: all 0.15s; text-align: center; }
+  .filing-btn.active { background: rgba(79,142,247,0.15); border-color: rgba(79,142,247,0.4); color: var(--accent); font-weight: 500; }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .metric-value { font-size: 18px; font-weight: 600; font-family: var(--mono); color: var(--text); }
+  .metric-value.accent { color: var(--accent); }
+  .metric-value.green { color: var(--accent2); }
+  .metric-value.gold { color: var(--gold); }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+  .match-note { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+  .match-note strong { color: var(--gold); }
+  .btn-export { background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.3); border-radius: var(--radius); padding: 7px 16px; color: var(--accent); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .btn-export:hover { background: rgba(79,142,247,0.25); }
+  .table-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; overflow-y: auto; max-height: calc(100vh - 280px); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  thead th { background: var(--surface2); padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1; }
+  thead th:not(:first-child):not(:nth-child(2)) { text-align: right; }
+  thead th:nth-child(2) { text-align: center; }
+  td { padding: 7px 12px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  td:not(:first-child):not(:nth-child(2)) { text-align: right; font-family: var(--mono); font-size: 12.5px; }
+  td:nth-child(2) { text-align: center; font-family: var(--mono); }
+  tr:last-child td { border-bottom: none; }
+  tr.band-end td { border-bottom: 1px solid var(--border2); }
+  tr.band-a { background: var(--surface); }
+  tr.band-b { background: var(--surface2); }
+  tr:hover td { background: var(--surface3) !important; }
+  tr.highlighted { background: var(--gold-dim) !important; }
+  tr.highlighted td { color: var(--gold) !important; }
+  .band-lbl { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .hourly-cell { font-weight: 500; color: var(--text) !important; }
+  .annual-cell { color: var(--text) !important; font-weight: 500; }
+  .target-pip { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-right: 5px; vertical-align: middle; }
+  .tax-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .tax-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
+  .tax-card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 14px; }
+  .tax-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .tax-row:last-child { border-bottom: none; }
+  .tax-lbl { color: var(--text2); }
+  .tax-lbl.indent { padding-left: 12px; font-size: 12px; color: var(--text3); }
+  .tax-val { font-family: var(--mono); font-size: 13px; color: var(--text); }
+  .tax-val.neg { color: var(--red); }
+  .tax-val.pos { color: var(--accent2); font-size: 15px; font-weight: 600; }
+  .tax-val.gross { color: var(--accent); }
+  .tax-row.total-row { border-top: 1px solid var(--border2); margin-top: 4px; padding-top: 12px; }
+  .bar-wrap { margin: 12px 0; }
+  .bar-track { height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; display: flex; }
+  .bar-seg { height: 100%; }
+  .bar-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .net-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .net-card { background: var(--surface2); border-radius: var(--radius); padding: 10px 12px; }
+  .net-card-lbl { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+  .net-card-val { font-size: 16px; font-weight: 600; font-family: var(--mono); color: var(--accent2); }
+  @media (max-width: 800px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .tax-grid { grid-template-columns: 1fr; }
+    .content { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo"><div class="logo-icon">$</div>Hourly Earnings Calculator</div>
+  <span class="header-note">2024 Tax Year · IRS Brackets</span>
+</header>
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('table')">Earnings Table</button>
+  <button class="tab-btn" onclick="showTab('tax')">Tax Calculator</button>
+</nav>
+<div class="main">
+  <aside class="sidebar">
+    <div id="sidebar-table">
+      <div class="s-group">
+        <div class="s-group-title">Rate Range</div>
+        <div class="field"><label>Min hourly ($)</label><input type="number" id="minRate" value="15.00" min="1" step="0.01" oninput="render()"></div>
+        <div class="field"><label>Max hourly ($)</label><input type="number" id="maxRate" value="26.93" min="1" step="0.01" oninput="render()"></div>
+      </div>
+      <div class="s-group">
+        <div class="s-group-title">Schedule</div>
+        <div class="field"><label>Hours / week</label><input type="number" id="hoursWk" value="40" min="1" max="80" oninput="render()"></div>
+        <div class="field"><label>Weeks / year</label><input type="number" id="weeksYr" value="52" min="1" max="52" oninput="render()"></div>
+        <div class="field"><label>PTO weeks</label><input type="number" id="ptoWks" value="2" min="0" max="10" oninput="render()"></div>
+      </div>
+      <div class="s-group">
+        <div class="s-group-title">Grouping</div>
+        <div class="field"><label>Band size ($)</label><input type="number" id="bandSize" value="50" min="10" max="500" step="10" oninput="render()"></div>
+      </div>
+      <div class="s-group">
+        <div class="s-group-title">Target Salary</div>
+        <div class="field">
+          <label>Annual target ($)</label>
+          <input type="number" id="targetSalary" placeholder="e.g. 45000" oninput="render()">
+          <div class="target-preview" id="targetPreview"></div>
+        </div>
+        <div class="field"><label>Highlight range (±$)</label><input type="number" id="targetRange" value="500" min="0" step="100" oninput="render()"></div>
+      </div>
+    </div>
+    <div id="sidebar-tax" style="display:none">
+      <div class="s-group">
+        <div class="s-group-title">Earnings</div>
+        <div class="field"><label>Hourly rate ($)</label><input type="number" id="taxHourly" value="20.00" step="0.01" oninput="renderTax()"></div>
+        <div class="field"><label>Hours / week</label><input type="number" id="taxHrs" value="40" oninput="renderTax()"></div>
+        <div class="field"><label>Weeks / year</label><input type="number" id="taxWks" value="52" oninput="renderTax()"></div>
+      </div>
+      <div class="s-group">
+        <div class="s-group-title">Tax Settings</div>
+        <div class="field">
+          <label>Filing status</label>
+          <div class="filing-toggle">
+            <button class="filing-btn active" id="fb-single" onclick="setFiling('single')">Single</button>
+            <button class="filing-btn" id="fb-married" onclick="setFiling('married')">Married</button>
+            <button class="filing-btn" id="fb-hoh" onclick="setFiling('hoh')">HoH</button>
+          </div>
+        </div>
+        <div class="field"><label>State tax rate (%)</label><input type="number" id="stateTax" value="5" step="0.1" min="0" max="15" oninput="renderTax()"></div>
+        <div class="field"><label>401k contribution (%)</label><input type="number" id="k401" value="0" step="0.5" min="0" max="25" oninput="renderTax()"></div>
+      </div>
+    </div>
+  </aside>
+  <main class="content">
+    <div id="tab-table">
+      <div class="metrics" id="metrics"></div>
+      <div class="toolbar">
+        <span class="match-note" id="matchNote"></span>
+        <button class="btn-export" onclick="exportCSV()">↓ Export CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:56px">Band</th>
+            <th style="width:90px">Hourly</th>
+            <th>Weekly</th>
+            <th>Monthly</th>
+            <th>Annual</th>
+            <th>Annual (PTO)</th>
+          </tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="tab-tax" style="display:none">
+      <div class="metrics" id="taxMetrics" style="margin-bottom:1.25rem"></div>
+      <div class="tax-grid" id="taxGrid"></div>
+    </div>
+  </main>
+</div>
+<script>
+let tableData=[];let filingStatus='single';
+const COLORS=['#4f8ef7','#3dd68c','#f5a742','#c46df5','#f56c6c','#42d4f4'];
+function fmt(n){return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtK(n){if(n>=100000)return'$'+(n/1000).toFixed(0)+'k';if(n>=10000)return'$'+(n/1000).toFixed(1)+'k';return fmt(n);}
+function showTab(t){
+  document.getElementById('tab-table').style.display=t==='table'?'':'none';
+  document.getElementById('tab-tax').style.display=t==='tax'?'':'none';
+  document.getElementById('sidebar-table').style.display=t==='table'?'':'none';
+  document.getElementById('sidebar-tax').style.display=t==='tax'?'':'none';
+  document.querySelectorAll('.tab-btn').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='table')||(i===1&&t==='tax')));
+  if(t==='tax')renderTax();
+}
+function setFiling(s){filingStatus=s;['single','married','hoh'].forEach(f=>document.getElementById('fb-'+f).classList.toggle('active',f===s));renderTax();}
+function render(){
+  const minR=parseFloat(document.getElementById('minRate').value)||15;
+  const maxR=parseFloat(document.getElementById('maxRate').value)||26.93;
+  const hrs=parseFloat(document.getElementById('hoursWk').value)||40;
+  const wks=parseFloat(document.getElementById('weeksYr').value)||52;
+  const pto=parseFloat(document.getElementById('ptoWks').value)||2;
+  const band=parseFloat(document.getElementById('bandSize').value)||50;
+  const target=parseFloat(document.getElementById('targetSalary').value);
+  const tRange=parseFloat(document.getElementById('targetRange').value)||500;
+  if(minR>=maxR)return;
+  const wksMo=wks/12;const ptoWks=Math.max(0,wks-pto);
+  const rates=[];for(let c=Math.round(minR*100);c<=Math.round(maxR*100);c++)rates.push(c/100);
+  const groups=[];let cur=null,curBand=null;
+  for(const r of rates){const b=Math.floor((r*hrs*wks)/band);if(b!==curBand){cur=[];curBand=b;groups.push(cur);}cur.push(r);}
+  tableData=[];
+  groups.forEach((group,gi)=>group.forEach((r,i)=>tableData.push({band:gi+1,isFirst:i===0,isLast:i===group.length-1,gi,hourly:r,weekly:r*hrs,monthly:r*hrs*wksMo,annual:r*hrs*wks,annualPto:r*hrs*ptoWks})));
+  const minAnn=minR*hrs*wks,maxAnn=maxR*hrs*wks;
+  document.getElementById('metrics').innerHTML=`<div class="metric"><div class="metric-label">Total rates</div><div class="metric-value accent">${rates.length}</div></div><div class="metric"><div class="metric-label">Bands</div><div class="metric-value">${groups.length}</div></div><div class="metric"><div class="metric-label">Min annual</div><div class="metric-value">${fmtK(minAnn)}</div></div><div class="metric"><div class="metric-label">Max annual</div><div class="metric-value gold">${fmtK(maxAnn)}</div></div>`;
+  if(!isNaN(target)&&target>0){const eq=rates.find(r=>Math.abs(r*hrs*wks-target)<0.5);document.getElementById('targetPreview').textContent=eq?`≈ $${eq.toFixed(2)}/hr`:`~$${(target/(hrs*wks)).toFixed(2)}/hr`;}
+  else document.getElementById('targetPreview').textContent='';
+  let matchCount=0,html='';
+  tableData.forEach(row=>{const cls=row.gi%2===0?'band-a':'band-b';const isT=!isNaN(target)&&target>0&&Math.abs(row.annual-target)<=tRange;if(isT)matchCount++;html+=`<tr class="${cls}${row.isLast?' band-end':''}${isT?' highlighted':''}"><td class="band-lbl">${row.isFirst?'B'+row.band:''}</td><td class="hourly-cell">${isT?'<span class="target-pip"></span>':''}${fmt(row.hourly)}</td><td>${fmt(row.weekly)}</td><td>${fmt(row.monthly)}</td><td class="annual-cell">${fmt(row.annual)}</td><td>${fmt(row.annualPto)}</td></tr>`;});
+  document.getElementById('tableBody').innerHTML=html;
+  document.getElementById('matchNote').innerHTML=(!isNaN(target)&&target>0)?`<strong>${matchCount}</strong> rate${matchCount!==1?'s':''} within ±$${tRange.toLocaleString()} of $${target.toLocaleString()} target`:'';
+}
+function exportCSV(){
+  if(!tableData.length)return;
+  const rows=[['Band','Hourly','Weekly','Monthly','Annual','Annual (PTO)']];
+  tableData.forEach(r=>rows.push([r.band,r.hourly.toFixed(2),r.weekly.toFixed(2),r.monthly.toFixed(2),r.annual.toFixed(2),r.annualPto.toFixed(2)]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hourly_earnings.csv';a.click();
+}
+function federalTax(income,filing){
+  const brackets={single:[[11600,.10],[47150,.12],[100525,.22],[191950,.24],[243725,.32],[609350,.35],[Infinity,.37]],married:[[23200,.10],[94300,.12],[201050,.22],[383900,.24],[487450,.32],[731200,.35],[Infinity,.37]],hoh:[[16550,.10],[63100,.12],[100500,.22],[191950,.24],[243700,.32],[609350,.35],[Infinity,.37]]};
+  const std={single:14600,married:29200,hoh:21900};
+  const taxable=Math.max(0,income-std[filing]);const bk=brackets[filing];
+  let tax=0,prev=0,breakdown=[];
+  for(const[lim,rate]of bk){if(taxable<=prev)break;const chunk=Math.min(taxable,lim)-prev;const t=chunk*rate;tax+=t;if(chunk>0)breakdown.push({rate,chunk,t});prev=lim;}
+  return{tax,taxable,std:std[filing],breakdown};
+}
+function ficaTax(income){const ss=Math.min(income,168600)*0.062;const med=income>200000?200000*0.0145+(income-200000)*0.0235:income*0.0145;return{ss,med,total:ss+med};}
+function renderTax(){
+  const hourly=parseFloat(document.getElementById('taxHourly').value)||0;
+  const hrs=parseFloat(document.getElementById('taxHrs').value)||40;
+  const wks=parseFloat(document.getElementById('taxWks').value)||52;
+  const stateRate=(parseFloat(document.getElementById('stateTax').value)||0)/100;
+  const k401Rate=(parseFloat(document.getElementById('k401').value)||0)/100;
+  const gross=hourly*hrs*wks;const k401amt=gross*k401Rate;const agi=gross-k401amt;
+  const fed=federalTax(agi,filingStatus);const fica=ficaTax(agi);const stateAmt=agi*stateRate;
+  const totalTax=fed.tax+fica.total+stateAmt;const net=gross-totalTax-k401amt;const effRate=gross>0?(totalTax/gross)*100:0;
+  document.getElementById('taxMetrics').innerHTML=`<div class="metric"><div class="metric-label">Gross annual</div><div class="metric-value accent">${fmtK(gross)}</div></div><div class="metric"><div class="metric-label">Total taxes</div><div class="metric-value" style="color:var(--red)">${fmtK(totalTax)}</div></div><div class="metric"><div class="metric-label">Effective rate</div><div class="metric-value">${effRate.toFixed(1)}%</div></div><div class="metric"><div class="metric-label">Net take-home</div><div class="metric-value green">${fmtK(net)}</div></div>`;
+  const segs=[{label:'Federal',amt:fed.tax,color:COLORS[0]},{label:'FICA',amt:fica.total,color:COLORS[1]},{label:'State',amt:stateAmt,color:COLORS[2]},...(k401amt>0?[{label:'401k',amt:k401amt,color:COLORS[3]}]:[]),{label:'Net pay',amt:net,color:'#2a3a2a'}];
+  const total=segs.reduce((s,x)=>s+x.amt,0);
+  const barHtml=segs.map(s=>`<div class="bar-seg" style="width:${(s.amt/total*100).toFixed(1)}%;background:${s.color}"></div>`).join('');
+  const legendHtml=segs.map(s=>`<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div>${s.label}</div>`).join('');
+  const bracketRows=fed.breakdown.map(b=>`<div class="tax-row"><span class="tax-lbl indent">${(b.rate*100).toFixed(0)}% on ${fmt(b.chunk)}</span><span class="tax-val neg">−${fmt(b.t)}</span></div>`).join('');
+  document.getElementById('taxGrid').innerHTML=`<div class="tax-card"><div class="tax-card-title">Income breakdown</div><div class="bar-wrap"><div class="bar-track">${barHtml}</div><div class="bar-legend">${legendHtml}</div></div><div style="margin-top:16px"><div class="tax-row"><span class="tax-lbl">Gross income</span><span class="tax-val gross">${fmt(gross)}</span></div>${k401amt>0?`<div class="tax-row"><span class="tax-lbl">401k (${(k401Rate*100).toFixed(1)}%)</span><span class="tax-val neg">−${fmt(k401amt)}</span></div>`:''}<div class="tax-row"><span class="tax-lbl">Adjusted gross</span><span class="tax-val">${fmt(agi)}</span></div><div class="tax-row"><span class="tax-lbl">Standard deduction</span><span class="tax-val neg">−${fmt(fed.std)}</span></div><div class="tax-row"><span class="tax-lbl">Federal taxable</span><span class="tax-val">${fmt(fed.taxable)}</span></div><div class="tax-row total-row"><span class="tax-lbl" style="font-weight:600">Net take-home</span><span class="tax-val pos">${fmt(net)}</span></div></div></div><div class="tax-card"><div class="tax-card-title">Tax breakdown</div>${bracketRows}<div class="tax-row" style="margin-top:8px"><span class="tax-lbl">Federal income tax</span><span class="tax-val neg">−${fmt(fed.tax)}</span></div><div class="tax-row"><span class="tax-lbl">Social Security (6.2%)</span><span class="tax-val neg">−${fmt(fica.ss)}</span></div><div class="tax-row"><span class="tax-lbl">Medicare (1.45%+)</span><span class="tax-val neg">−${fmt(fica.med)}</span></div><div class="tax-row"><span class="tax-lbl">State tax (${(stateRate*100).toFixed(1)}%)</span><span class="tax-val neg">−${fmt(stateAmt)}</span></div><div class="tax-row total-row"><span class="tax-lbl" style="font-weight:600">Total taxes</span><span class="tax-val neg">−${fmt(totalTax)}</span></div><div class="net-metrics"><div class="net-card"><div class="net-card-lbl">Net hourly</div><div class="net-card-val">${fmt(net/(hrs*wks))}</div></div><div class="net-card"><div class="net-card-lbl">Net weekly</div><div class="net-card-val">${fmtK(net/wks)}</div></div><div class="net-card"><div class="net-card-lbl">Net monthly</div><div class="net-card-val">${fmtK(net/12)}</div></div></div></div>`;
+}
+render();
+</script>
+</body>
+</html>
