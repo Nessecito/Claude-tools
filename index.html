@@ -48,7 +48,7 @@
   .field input::placeholder { color: var(--text3); }
   .target-preview { font-size: 11px; color: var(--gold); font-family: var(--mono); margin-top: 5px; min-height: 16px; }
   .filing-toggle { display: flex; gap: 4px; }
-  .filing-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 7px 0; font-family: var(--sans); font-size: 12px; color: var(--text2); cursor: pointer; transition: all 0.15s; text-align: center; }
+  .filing-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 7px 0; font-family: var(--sans); font-size: 12px; color: var(--text2); cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; text-align: center; }
   .filing-btn.active { background: rgba(79,142,247,0.15); border-color: rgba(79,142,247,0.4); color: var(--accent); font-weight: 500; }
   .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
   .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
@@ -57,10 +57,11 @@
   .metric-value.accent { color: var(--accent); }
   .metric-value.green { color: var(--accent2); }
   .metric-value.gold { color: var(--gold); }
+  .metric-value.red { color: var(--red); }
   .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
   .match-note { font-size: 12px; color: var(--text2); font-family: var(--mono); }
   .match-note strong { color: var(--gold); }
-  .btn-export { background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.3); border-radius: var(--radius); padding: 7px 16px; color: var(--accent); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .btn-export { background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.3); border-radius: var(--radius); padding: 7px 16px; color: var(--accent); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.15s; }
   .btn-export:hover { background: rgba(79,142,247,0.25); }
   .table-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; overflow-y: auto; max-height: calc(100vh - 280px); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
@@ -126,35 +127,35 @@
     <div id="sidebar-table">
       <div class="s-group">
         <div class="s-group-title">Rate Range</div>
-        <div class="field"><label>Min hourly ($)</label><input type="number" id="minRate" value="15.00" min="1" step="0.01" oninput="render()"></div>
-        <div class="field"><label>Max hourly ($)</label><input type="number" id="maxRate" value="26.93" min="1" step="0.01" oninput="render()"></div>
+        <div class="field"><label>Min hourly ($)</label><input type="number" id="minRate" value="15.00" min="1" step="0.01" oninput="dRender()"></div>
+        <div class="field"><label>Max hourly ($)</label><input type="number" id="maxRate" value="26.93" min="1" step="0.01" oninput="dRender()"></div>
       </div>
       <div class="s-group">
         <div class="s-group-title">Schedule</div>
-        <div class="field"><label>Hours / week</label><input type="number" id="hoursWk" value="40" min="1" max="80" oninput="render()"></div>
-        <div class="field"><label>Weeks / year</label><input type="number" id="weeksYr" value="52" min="1" max="52" oninput="render()"></div>
-        <div class="field"><label>PTO weeks</label><input type="number" id="ptoWks" value="2" min="0" max="10" oninput="render()"></div>
+        <div class="field"><label>Hours / week</label><input type="number" id="hoursWk" value="40" min="1" max="80" oninput="dRender()"></div>
+        <div class="field"><label>Weeks / year</label><input type="number" id="weeksYr" value="52" min="1" max="52" oninput="dRender()"></div>
+        <div class="field"><label>PTO weeks</label><input type="number" id="ptoWks" value="2" min="0" max="10" oninput="dRender()"></div>
       </div>
       <div class="s-group">
         <div class="s-group-title">Grouping</div>
-        <div class="field"><label>Band size ($)</label><input type="number" id="bandSize" value="50" min="10" max="500" step="10" oninput="render()"></div>
+        <div class="field"><label>Band size ($)</label><input type="number" id="bandSize" value="50" min="10" max="500" step="10" oninput="dRender()"></div>
       </div>
       <div class="s-group">
         <div class="s-group-title">Target Salary</div>
         <div class="field">
           <label>Annual target ($)</label>
-          <input type="number" id="targetSalary" placeholder="e.g. 45000" oninput="render()">
+          <input type="number" id="targetSalary" placeholder="e.g. 45000" oninput="dRender()">
           <div class="target-preview" id="targetPreview"></div>
         </div>
-        <div class="field"><label>Highlight range (±$)</label><input type="number" id="targetRange" value="500" min="0" step="100" oninput="render()"></div>
+        <div class="field"><label>Highlight range (±$)</label><input type="number" id="targetRange" value="500" min="0" step="100" oninput="dRender()"></div>
       </div>
     </div>
     <div id="sidebar-tax" style="display:none">
       <div class="s-group">
         <div class="s-group-title">Earnings</div>
-        <div class="field"><label>Hourly rate ($)</label><input type="number" id="taxHourly" value="20.00" step="0.01" oninput="renderTax()"></div>
-        <div class="field"><label>Hours / week</label><input type="number" id="taxHrs" value="40" oninput="renderTax()"></div>
-        <div class="field"><label>Weeks / year</label><input type="number" id="taxWks" value="52" oninput="renderTax()"></div>
+        <div class="field"><label>Hourly rate ($)</label><input type="number" id="taxHourly" value="20.00" step="0.01" oninput="dRenderTax()"></div>
+        <div class="field"><label>Hours / week</label><input type="number" id="taxHrs" value="40" oninput="dRenderTax()"></div>
+        <div class="field"><label>Weeks / year</label><input type="number" id="taxWks" value="52" oninput="dRenderTax()"></div>
       </div>
       <div class="s-group">
         <div class="s-group-title">Tax Settings</div>
@@ -166,8 +167,8 @@
             <button class="filing-btn" id="fb-hoh" onclick="setFiling('hoh')">HoH</button>
           </div>
         </div>
-        <div class="field"><label>State tax rate (%)</label><input type="number" id="stateTax" value="5" step="0.1" min="0" max="15" oninput="renderTax()"></div>
-        <div class="field"><label>401k contribution (%)</label><input type="number" id="k401" value="0" step="0.5" min="0" max="25" oninput="renderTax()"></div>
+        <div class="field"><label>State tax rate (%)</label><input type="number" id="stateTax" value="5" step="0.1" min="0" max="15" oninput="dRenderTax()"></div>
+        <div class="field"><label>401k contribution (%)</label><input type="number" id="k401" value="0" step="0.5" min="0" max="25" oninput="dRenderTax()"></div>
       </div>
     </div>
   </aside>
@@ -193,35 +194,49 @@
       </div>
     </div>
     <div id="tab-tax" style="display:none">
-      <div class="metrics" id="taxMetrics" style="margin-bottom:1.25rem"></div>
+      <div class="metrics" id="taxMetrics"></div>
       <div class="tax-grid" id="taxGrid"></div>
     </div>
   </main>
 </div>
 <script>
-let tableData=[];let filingStatus='single';
+let tableData=[];let filingStatus='single';let activeTab='table';
 const COLORS=['#4f8ef7','#3dd68c','#f5a742','#c46df5','#f56c6c','#42d4f4'];
+const BRACKETS={
+  single:[[11600,.10],[47150,.12],[100525,.22],[191950,.24],[243725,.32],[609350,.35],[Infinity,.37]],
+  married:[[23200,.10],[94300,.12],[201050,.22],[383900,.24],[487450,.32],[731200,.35],[Infinity,.37]],
+  hoh:[[16550,.10],[63100,.12],[100500,.22],[191950,.24],[243700,.32],[609350,.35],[Infinity,.37]]
+};
+const STD={single:14600,married:29200,hoh:21900};
+const AMTA={single:200000,married:250000,hoh:200000};
+
 function fmt(n){return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtK(n){if(n>=100000)return'$'+(n/1000).toFixed(0)+'k';if(n>=10000)return'$'+(n/1000).toFixed(1)+'k';return fmt(n);}
+function getNum(id,fallback){return parseFloat(document.getElementById(id).value)||fallback;}
+function metricHtml(label,val,cls){return`<div class="metric"><div class="metric-label">${label}</div><div class="metric-value${cls?' '+cls:''}">${val}</div></div>`;}
+function debounce(fn,ms){let t;return()=>{clearTimeout(t);t=setTimeout(fn,ms);};}
+
 function showTab(t){
   document.getElementById('tab-table').style.display=t==='table'?'':'none';
   document.getElementById('tab-tax').style.display=t==='tax'?'':'none';
   document.getElementById('sidebar-table').style.display=t==='table'?'':'none';
   document.getElementById('sidebar-tax').style.display=t==='tax'?'':'none';
   document.querySelectorAll('.tab-btn').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='table')||(i===1&&t==='tax')));
-  if(t==='tax')renderTax();
+  if(t==='tax'&&activeTab!=='tax')renderTax();
+  activeTab=t;
 }
 function setFiling(s){filingStatus=s;['single','married','hoh'].forEach(f=>document.getElementById('fb-'+f).classList.toggle('active',f===s));renderTax();}
 function render(){
-  const minR=parseFloat(document.getElementById('minRate').value)||15;
-  const maxR=parseFloat(document.getElementById('maxRate').value)||26.93;
-  const hrs=parseFloat(document.getElementById('hoursWk').value)||40;
-  const wks=parseFloat(document.getElementById('weeksYr').value)||52;
-  const pto=parseFloat(document.getElementById('ptoWks').value)||2;
-  const band=parseFloat(document.getElementById('bandSize').value)||50;
+  const minR=getNum('minRate',15);
+  const maxR=getNum('maxRate',26.93);
+  const hrs=getNum('hoursWk',40);
+  const wks=getNum('weeksYr',52);
+  const pto=getNum('ptoWks',2);
+  const band=getNum('bandSize',50);
   const target=parseFloat(document.getElementById('targetSalary').value);
-  const tRange=parseFloat(document.getElementById('targetRange').value)||500;
+  const tRange=getNum('targetRange',500);
   if(minR>=maxR)return;
+  if(Math.round(maxR*100)-Math.round(minR*100)+1>5000)return;
   const wksMo=wks/12;const ptoWks=Math.max(0,wks-pto);
   const rates=[];for(let c=Math.round(minR*100);c<=Math.round(maxR*100);c++)rates.push(c/100);
   const groups=[];let cur=null,curBand=null;
@@ -229,47 +244,52 @@ function render(){
   tableData=[];
   groups.forEach((group,gi)=>group.forEach((r,i)=>tableData.push({band:gi+1,isFirst:i===0,isLast:i===group.length-1,gi,hourly:r,weekly:r*hrs,monthly:r*hrs*wksMo,annual:r*hrs*wks,annualPto:r*hrs*ptoWks})));
   const minAnn=minR*hrs*wks,maxAnn=maxR*hrs*wks;
-  document.getElementById('metrics').innerHTML=`<div class="metric"><div class="metric-label">Total rates</div><div class="metric-value accent">${rates.length}</div></div><div class="metric"><div class="metric-label">Bands</div><div class="metric-value">${groups.length}</div></div><div class="metric"><div class="metric-label">Min annual</div><div class="metric-value">${fmtK(minAnn)}</div></div><div class="metric"><div class="metric-label">Max annual</div><div class="metric-value gold">${fmtK(maxAnn)}</div></div>`;
-  if(!isNaN(target)&&target>0){const eq=rates.find(r=>Math.abs(r*hrs*wks-target)<0.5);document.getElementById('targetPreview').textContent=eq?`≈ $${eq.toFixed(2)}/hr`:`~$${(target/(hrs*wks)).toFixed(2)}/hr`;}
+  document.getElementById('metrics').innerHTML=metricHtml('Total rates',rates.length,'accent')+metricHtml('Bands',groups.length)+metricHtml('Min annual',fmtK(minAnn))+metricHtml('Max annual',fmtK(maxAnn),'gold');
+  const hasTarget=!isNaN(target)&&target>0;
+  if(hasTarget){const eq=rates.find(r=>Math.abs(r*hrs*wks-target)<0.5);document.getElementById('targetPreview').textContent=eq?`≈ $${eq.toFixed(2)}/hr`:`~$${(target/(hrs*wks)).toFixed(2)}/hr`;}
   else document.getElementById('targetPreview').textContent='';
   let matchCount=0,html='';
-  tableData.forEach(row=>{const cls=row.gi%2===0?'band-a':'band-b';const isT=!isNaN(target)&&target>0&&Math.abs(row.annual-target)<=tRange;if(isT)matchCount++;html+=`<tr class="${cls}${row.isLast?' band-end':''}${isT?' highlighted':''}"><td class="band-lbl">${row.isFirst?'B'+row.band:''}</td><td class="hourly-cell">${isT?'<span class="target-pip"></span>':''}${fmt(row.hourly)}</td><td>${fmt(row.weekly)}</td><td>${fmt(row.monthly)}</td><td class="annual-cell">${fmt(row.annual)}</td><td>${fmt(row.annualPto)}</td></tr>`;});
+  tableData.forEach(row=>{const cls=row.gi%2===0?'band-a':'band-b';const isT=hasTarget&&Math.abs(row.annual-target)<=tRange;if(isT)matchCount++;html+=`<tr class="${cls}${row.isLast?' band-end':''}${isT?' highlighted':''}"><td class="band-lbl">${row.isFirst?'B'+row.band:''}</td><td class="hourly-cell">${isT?'<span class="target-pip"></span>':''}${fmt(row.hourly)}</td><td>${fmt(row.weekly)}</td><td>${fmt(row.monthly)}</td><td class="annual-cell">${fmt(row.annual)}</td><td>${fmt(row.annualPto)}</td></tr>`;});
   document.getElementById('tableBody').innerHTML=html;
-  document.getElementById('matchNote').innerHTML=(!isNaN(target)&&target>0)?`<strong>${matchCount}</strong> rate${matchCount!==1?'s':''} within ±$${tRange.toLocaleString()} of $${target.toLocaleString()} target`:'';
+  document.getElementById('matchNote').innerHTML=hasTarget?`<strong>${matchCount}</strong> rate${matchCount!==1?'s':''} within ±$${tRange.toLocaleString()} of $${target.toLocaleString()} target`:'';
 }
+const dRender=debounce(render,150);
 function exportCSV(){
   if(!tableData.length)return;
   const rows=[['Band','Hourly','Weekly','Monthly','Annual','Annual (PTO)']];
   tableData.forEach(r=>rows.push([r.band,r.hourly.toFixed(2),r.weekly.toFixed(2),r.monthly.toFixed(2),r.annual.toFixed(2),r.annualPto.toFixed(2)]));
   const csv=rows.map(r=>r.join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hourly_earnings.csv';a.click();
+  const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download='hourly_earnings.csv';a.click();URL.revokeObjectURL(url);
 }
 function federalTax(income,filing){
-  const brackets={single:[[11600,.10],[47150,.12],[100525,.22],[191950,.24],[243725,.32],[609350,.35],[Infinity,.37]],married:[[23200,.10],[94300,.12],[201050,.22],[383900,.24],[487450,.32],[731200,.35],[Infinity,.37]],hoh:[[16550,.10],[63100,.12],[100500,.22],[191950,.24],[243700,.32],[609350,.35],[Infinity,.37]]};
-  const std={single:14600,married:29200,hoh:21900};
-  const taxable=Math.max(0,income-std[filing]);const bk=brackets[filing];
+  const taxable=Math.max(0,income-STD[filing]);const bk=BRACKETS[filing];
   let tax=0,prev=0,breakdown=[];
   for(const[lim,rate]of bk){if(taxable<=prev)break;const chunk=Math.min(taxable,lim)-prev;const t=chunk*rate;tax+=t;if(chunk>0)breakdown.push({rate,chunk,t});prev=lim;}
-  return{tax,taxable,std:std[filing],breakdown};
+  return{tax,taxable,std:STD[filing],breakdown};
 }
-function ficaTax(income){const ss=Math.min(income,168600)*0.062;const med=income>200000?200000*0.0145+(income-200000)*0.0235:income*0.0145;return{ss,med,total:ss+med};}
+function ficaTax(income,filing){
+  const ss=Math.min(income,168600)*0.062;
+  const threshold=AMTA[filing]??200000;
+  const med=income>threshold?threshold*0.0145+(income-threshold)*0.0235:income*0.0145;
+  return{ss,med,total:ss+med};
+}
 function renderTax(){
-  const hourly=parseFloat(document.getElementById('taxHourly').value)||0;
-  const hrs=parseFloat(document.getElementById('taxHrs').value)||40;
-  const wks=parseFloat(document.getElementById('taxWks').value)||52;
-  const stateRate=(parseFloat(document.getElementById('stateTax').value)||0)/100;
-  const k401Rate=(parseFloat(document.getElementById('k401').value)||0)/100;
+  const hourly=getNum('taxHourly',0);
+  const hrs=getNum('taxHrs',40);
+  const wks=getNum('taxWks',52);
+  const stateRate=getNum('stateTax',0)/100;
+  const k401Rate=getNum('k401',0)/100;
   const gross=hourly*hrs*wks;const k401amt=gross*k401Rate;const agi=gross-k401amt;
-  const fed=federalTax(agi,filingStatus);const fica=ficaTax(agi);const stateAmt=agi*stateRate;
+  const fed=federalTax(agi,filingStatus);const fica=ficaTax(agi,filingStatus);const stateAmt=agi*stateRate;
   const totalTax=fed.tax+fica.total+stateAmt;const net=gross-totalTax-k401amt;const effRate=gross>0?(totalTax/gross)*100:0;
-  document.getElementById('taxMetrics').innerHTML=`<div class="metric"><div class="metric-label">Gross annual</div><div class="metric-value accent">${fmtK(gross)}</div></div><div class="metric"><div class="metric-label">Total taxes</div><div class="metric-value" style="color:var(--red)">${fmtK(totalTax)}</div></div><div class="metric"><div class="metric-label">Effective rate</div><div class="metric-value">${effRate.toFixed(1)}%</div></div><div class="metric"><div class="metric-label">Net take-home</div><div class="metric-value green">${fmtK(net)}</div></div>`;
+  document.getElementById('taxMetrics').innerHTML=metricHtml('Gross annual',fmtK(gross),'accent')+metricHtml('Total taxes',fmtK(totalTax),'red')+metricHtml('Effective rate',effRate.toFixed(1)+'%')+metricHtml('Net take-home',fmtK(net),'green');
   const segs=[{label:'Federal',amt:fed.tax,color:COLORS[0]},{label:'FICA',amt:fica.total,color:COLORS[1]},{label:'State',amt:stateAmt,color:COLORS[2]},...(k401amt>0?[{label:'401k',amt:k401amt,color:COLORS[3]}]:[]),{label:'Net pay',amt:net,color:'#2a3a2a'}];
-  const total=segs.reduce((s,x)=>s+x.amt,0);
-  const barHtml=segs.map(s=>`<div class="bar-seg" style="width:${(s.amt/total*100).toFixed(1)}%;background:${s.color}"></div>`).join('');
+  const barHtml=segs.map(s=>`<div class="bar-seg" style="width:${(s.amt/gross*100).toFixed(1)}%;background:${s.color}"></div>`).join('');
   const legendHtml=segs.map(s=>`<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div>${s.label}</div>`).join('');
   const bracketRows=fed.breakdown.map(b=>`<div class="tax-row"><span class="tax-lbl indent">${(b.rate*100).toFixed(0)}% on ${fmt(b.chunk)}</span><span class="tax-val neg">−${fmt(b.t)}</span></div>`).join('');
   document.getElementById('taxGrid').innerHTML=`<div class="tax-card"><div class="tax-card-title">Income breakdown</div><div class="bar-wrap"><div class="bar-track">${barHtml}</div><div class="bar-legend">${legendHtml}</div></div><div style="margin-top:16px"><div class="tax-row"><span class="tax-lbl">Gross income</span><span class="tax-val gross">${fmt(gross)}</span></div>${k401amt>0?`<div class="tax-row"><span class="tax-lbl">401k (${(k401Rate*100).toFixed(1)}%)</span><span class="tax-val neg">−${fmt(k401amt)}</span></div>`:''}<div class="tax-row"><span class="tax-lbl">Adjusted gross</span><span class="tax-val">${fmt(agi)}</span></div><div class="tax-row"><span class="tax-lbl">Standard deduction</span><span class="tax-val neg">−${fmt(fed.std)}</span></div><div class="tax-row"><span class="tax-lbl">Federal taxable</span><span class="tax-val">${fmt(fed.taxable)}</span></div><div class="tax-row total-row"><span class="tax-lbl" style="font-weight:600">Net take-home</span><span class="tax-val pos">${fmt(net)}</span></div></div></div><div class="tax-card"><div class="tax-card-title">Tax breakdown</div>${bracketRows}<div class="tax-row" style="margin-top:8px"><span class="tax-lbl">Federal income tax</span><span class="tax-val neg">−${fmt(fed.tax)}</span></div><div class="tax-row"><span class="tax-lbl">Social Security (6.2%)</span><span class="tax-val neg">−${fmt(fica.ss)}</span></div><div class="tax-row"><span class="tax-lbl">Medicare (1.45%+)</span><span class="tax-val neg">−${fmt(fica.med)}</span></div><div class="tax-row"><span class="tax-lbl">State tax (${(stateRate*100).toFixed(1)}%)</span><span class="tax-val neg">−${fmt(stateAmt)}</span></div><div class="tax-row total-row"><span class="tax-lbl" style="font-weight:600">Total taxes</span><span class="tax-val neg">−${fmt(totalTax)}</span></div><div class="net-metrics"><div class="net-card"><div class="net-card-lbl">Net hourly</div><div class="net-card-val">${fmt(net/(hrs*wks))}</div></div><div class="net-card"><div class="net-card-lbl">Net weekly</div><div class="net-card-val">${fmtK(net/wks)}</div></div><div class="net-card"><div class="net-card-lbl">Net monthly</div><div class="net-card-val">${fmtK(net/12)}</div></div></div></div>`;
 }
+const dRenderTax=debounce(renderTax,150);
 render();
 </script>
 </body>
