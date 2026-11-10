@@ -61,6 +61,8 @@
   .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
   .match-note { font-size: 12px; color: var(--text2); font-family: var(--mono); }
   .match-note strong { color: var(--gold); }
+  .match-note.error { color: var(--red); }
+  .net-cell { color: var(--accent2) !important; }
   .btn-export { background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.3); border-radius: var(--radius); padding: 7px 16px; color: var(--accent); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.15s; }
   .btn-export:hover { background: rgba(79,142,247,0.25); }
   .table-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; overflow-y: auto; max-height: calc(100vh - 280px); }
@@ -167,8 +169,8 @@
             <button class="filing-btn" id="fb-hoh" onclick="setFiling('hoh')">HoH</button>
           </div>
         </div>
-        <div class="field"><label>State tax rate (%)</label><input type="number" id="stateTax" value="5" step="0.1" min="0" max="15" oninput="dRenderTax()"></div>
-        <div class="field"><label>401k contribution (%)</label><input type="number" id="k401" value="0" step="0.5" min="0" max="25" oninput="dRenderTax()"></div>
+        <div class="field"><label>State tax rate (%)</label><input type="number" id="stateTax" value="5" step="0.1" min="0" max="15" oninput="dRenderTax();dRender()"></div>
+        <div class="field"><label>401k contribution (%)</label><input type="number" id="k401" value="0" step="0.5" min="0" max="25" oninput="dRenderTax();dRender()"></div>
       </div>
     </div>
   </aside>
@@ -188,6 +190,7 @@
             <th>Monthly</th>
             <th>Annual</th>
             <th>Annual (PTO)</th>
+            <th title="After federal, FICA, state and 401k, using the Tax Calculator settings">Net Annual</th>
           </tr></thead>
           <tbody id="tableBody"></tbody>
         </table>
@@ -212,7 +215,7 @@ const AMTA={single:200000,married:250000,hoh:200000};
 
 function fmt(n){return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtK(n){if(n>=100000)return'$'+(n/1000).toFixed(0)+'k';if(n>=10000)return'$'+(n/1000).toFixed(1)+'k';return fmt(n);}
-function getNum(id,fallback){return parseFloat(document.getElementById(id).value)||fallback;}
+function getNum(id,fallback){const v=parseFloat(document.getElementById(id).value);return isNaN(v)?fallback:v;}
 function metricHtml(label,val,cls){return`<div class="metric"><div class="metric-label">${label}</div><div class="metric-value${cls?' '+cls:''}">${val}</div></div>`;}
 function debounce(fn,ms){let t;return()=>{clearTimeout(t);t=setTimeout(fn,ms);};}
 
@@ -225,7 +228,7 @@ function showTab(t){
   if(t==='tax'&&activeTab!=='tax')renderTax();
   activeTab=t;
 }
-function setFiling(s){filingStatus=s;['single','married','hoh'].forEach(f=>document.getElementById('fb-'+f).classList.toggle('active',f===s));renderTax();}
+function setFiling(s){filingStatus=s;['single','married','hoh'].forEach(f=>document.getElementById('fb-'+f).classList.toggle('active',f===s));renderTax();render();}
 function render(){
   const minR=getNum('minRate',15);
   const maxR=getNum('maxRate',26.93);
@@ -235,29 +238,42 @@ function render(){
   const band=getNum('bandSize',50);
   const target=parseFloat(document.getElementById('targetSalary').value);
   const tRange=getNum('targetRange',500);
-  if(minR>=maxR)return;
-  if(Math.round(maxR*100)-Math.round(minR*100)+1>5000)return;
+  const rangeErr=minR<=0?'Min hourly must be greater than $0.'
+    :minR>=maxR?'Min hourly must be less than max hourly.'
+    :hrs<=0||wks<=0?'Hours and weeks must be greater than 0.'
+    :band<=0?'Band size must be greater than $0.'
+    :Math.round(maxR*100)-Math.round(minR*100)+1>5000?`Range too large: ${(Math.round(maxR*100)-Math.round(minR*100)+1).toLocaleString()} rates (max 5,000). Narrow the min/max.`
+    :'';
+  if(rangeErr){
+    tableData=[];
+    document.getElementById('tableBody').innerHTML='';
+    document.getElementById('metrics').innerHTML='';
+    document.getElementById('targetPreview').textContent='';
+    const note=document.getElementById('matchNote');note.className='match-note error';note.textContent=rangeErr;
+    return;
+  }
+  document.getElementById('matchNote').className='match-note';
   const wksMo=wks/12;const ptoWks=Math.max(0,wks-pto);
   const rates=[];for(let c=Math.round(minR*100);c<=Math.round(maxR*100);c++)rates.push(c/100);
   const groups=[];let cur=null,curBand=null;
   for(const r of rates){const b=Math.floor((r*hrs*wks)/band);if(b!==curBand){cur=[];curBand=b;groups.push(cur);}cur.push(r);}
   tableData=[];
-  groups.forEach((group,gi)=>group.forEach((r,i)=>tableData.push({band:gi+1,isFirst:i===0,isLast:i===group.length-1,gi,hourly:r,weekly:r*hrs,monthly:r*hrs*wksMo,annual:r*hrs*wks,annualPto:r*hrs*ptoWks})));
+  groups.forEach((group,gi)=>group.forEach((r,i)=>tableData.push({band:gi+1,isFirst:i===0,isLast:i===group.length-1,gi,hourly:r,weekly:r*hrs,monthly:r*hrs*wksMo,annual:r*hrs*wks,annualPto:r*hrs*ptoWks,netAnnual:computeNet(r*hrs*wks).net})));
   const minAnn=minR*hrs*wks,maxAnn=maxR*hrs*wks;
   document.getElementById('metrics').innerHTML=metricHtml('Total rates',rates.length,'accent')+metricHtml('Bands',groups.length)+metricHtml('Min annual',fmtK(minAnn))+metricHtml('Max annual',fmtK(maxAnn),'gold');
   const hasTarget=!isNaN(target)&&target>0;
   if(hasTarget){const eq=rates.find(r=>Math.abs(r*hrs*wks-target)<0.5);document.getElementById('targetPreview').textContent=eq?`≈ $${eq.toFixed(2)}/hr`:`~$${(target/(hrs*wks)).toFixed(2)}/hr`;}
   else document.getElementById('targetPreview').textContent='';
   let matchCount=0,html='';
-  tableData.forEach(row=>{const cls=row.gi%2===0?'band-a':'band-b';const isT=hasTarget&&Math.abs(row.annual-target)<=tRange;if(isT)matchCount++;html+=`<tr class="${cls}${row.isLast?' band-end':''}${isT?' highlighted':''}"><td class="band-lbl">${row.isFirst?'B'+row.band:''}</td><td class="hourly-cell">${isT?'<span class="target-pip"></span>':''}${fmt(row.hourly)}</td><td>${fmt(row.weekly)}</td><td>${fmt(row.monthly)}</td><td class="annual-cell">${fmt(row.annual)}</td><td>${fmt(row.annualPto)}</td></tr>`;});
+  tableData.forEach(row=>{const cls=row.gi%2===0?'band-a':'band-b';const isT=hasTarget&&Math.abs(row.annual-target)<=tRange;if(isT)matchCount++;html+=`<tr class="${cls}${row.isLast?' band-end':''}${isT?' highlighted':''}"><td class="band-lbl">${row.isFirst?'B'+row.band:''}</td><td class="hourly-cell">${isT?'<span class="target-pip"></span>':''}${fmt(row.hourly)}</td><td>${fmt(row.weekly)}</td><td>${fmt(row.monthly)}</td><td class="annual-cell">${fmt(row.annual)}</td><td>${fmt(row.annualPto)}</td><td class="net-cell">${fmt(row.netAnnual)}</td></tr>`;});
   document.getElementById('tableBody').innerHTML=html;
   document.getElementById('matchNote').innerHTML=hasTarget?`<strong>${matchCount}</strong> rate${matchCount!==1?'s':''} within ±$${tRange.toLocaleString()} of $${target.toLocaleString()} target`:'';
 }
 const dRender=debounce(render,150);
 function exportCSV(){
   if(!tableData.length)return;
-  const rows=[['Band','Hourly','Weekly','Monthly','Annual','Annual (PTO)']];
-  tableData.forEach(r=>rows.push([r.band,r.hourly.toFixed(2),r.weekly.toFixed(2),r.monthly.toFixed(2),r.annual.toFixed(2),r.annualPto.toFixed(2)]));
+  const rows=[['Band','Hourly','Weekly','Monthly','Annual','Annual (PTO)','Net Annual']];
+  tableData.forEach(r=>rows.push([r.band,r.hourly.toFixed(2),r.weekly.toFixed(2),r.monthly.toFixed(2),r.annual.toFixed(2),r.annualPto.toFixed(2),r.netAnnual.toFixed(2)]));
   const csv=rows.map(r=>r.join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download='hourly_earnings.csv';a.click();URL.revokeObjectURL(url);
 }
@@ -273,15 +289,21 @@ function ficaTax(income,filing){
   const med=income>threshold?threshold*0.0145+(income-threshold)*0.0235:income*0.0145;
   return{ss,med,total:ss+med};
 }
+function computeNet(gross){
+  const stateRate=getNum('stateTax',0)/100;const k401Rate=getNum('k401',0)/100;
+  const k401amt=gross*k401Rate;const agi=gross-k401amt;
+  const fed=federalTax(agi,filingStatus);const fica=ficaTax(agi,filingStatus);const stateAmt=agi*stateRate;
+  const totalTax=fed.tax+fica.total+stateAmt;
+  return{k401amt,agi,fed,fica,stateAmt,totalTax,net:gross-totalTax-k401amt};
+}
 function renderTax(){
   const hourly=getNum('taxHourly',0);
   const hrs=getNum('taxHrs',40);
   const wks=getNum('taxWks',52);
   const stateRate=getNum('stateTax',0)/100;
   const k401Rate=getNum('k401',0)/100;
-  const gross=hourly*hrs*wks;const k401amt=gross*k401Rate;const agi=gross-k401amt;
-  const fed=federalTax(agi,filingStatus);const fica=ficaTax(agi,filingStatus);const stateAmt=agi*stateRate;
-  const totalTax=fed.tax+fica.total+stateAmt;const net=gross-totalTax-k401amt;const effRate=gross>0?(totalTax/gross)*100:0;
+  const gross=hourly*hrs*wks;
+  const{k401amt,agi,fed,fica,stateAmt,totalTax,net}=computeNet(gross);const effRate=gross>0?(totalTax/gross)*100:0;
   document.getElementById('taxMetrics').innerHTML=metricHtml('Gross annual',fmtK(gross),'accent')+metricHtml('Total taxes',fmtK(totalTax),'red')+metricHtml('Effective rate',effRate.toFixed(1)+'%')+metricHtml('Net take-home',fmtK(net),'green');
   const segs=[{label:'Federal',amt:fed.tax,color:COLORS[0]},{label:'FICA',amt:fica.total,color:COLORS[1]},{label:'State',amt:stateAmt,color:COLORS[2]},...(k401amt>0?[{label:'401k',amt:k401amt,color:COLORS[3]}]:[]),{label:'Net pay',amt:net,color:'#2a3a2a'}];
   const barHtml=segs.map(s=>`<div class="bar-seg" style="width:${(s.amt/gross*100).toFixed(1)}%;background:${s.color}"></div>`).join('');
